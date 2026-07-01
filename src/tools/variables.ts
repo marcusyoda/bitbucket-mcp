@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import { resolveTarget } from '../config.js';
+import { assertWorkspace, resolveTarget } from '../config.js';
 import { assertConfirmed, assertWritable } from '../guard.js';
 import { execute, jsonResult, textResult, type Ctx } from '../lib.js';
 import { normalizeEnvironment, normalizeVariable } from '../normalize.js';
@@ -94,7 +94,7 @@ export function registerVariableTools(server: McpServer, ctx: Ctx): void {
     },
     (args) =>
       execute(async () => {
-        const ws = args.workspace?.trim() || ctx.config.workspace;
+        const ws = assertWorkspace(ctx.config, args.workspace);
         const page = await ctx.client.paginate(`/workspaces/${ws}/pipelines-config/variables/`, {
           cap: args.limit,
         });
