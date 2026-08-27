@@ -6,6 +6,7 @@
 pipelines, webhooks and variables, exposed as a controlled tool surface instead of
 raw REST calls.
 
+[![CI](https://github.com/marcusyoda/bitbucket-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/marcusyoda/bitbucket-mcp/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@marcusyoda/bitbucket-mcp?color=%230A66C2&label=npm)](https://www.npmjs.com/package/@marcusyoda/bitbucket-mcp)
 [![npm downloads](https://img.shields.io/npm/dm/@marcusyoda/bitbucket-mcp?color=%230A66C2)](https://www.npmjs.com/package/@marcusyoda/bitbucket-mcp)
 [![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)

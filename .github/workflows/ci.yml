@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+      # A correct bundle externalizes every node_modules dependency and lands in the tens
+      # of KB. Megabytes mean the externalization broke and the package would ship a copy
+      # of the SDK. Fail here instead of on npm.
+      - name: Guard bundle size
+        run: |
+          LIMIT=307200
+          SIZE=$(stat -c%s dist/index.js)
+          echo "bundle: $SIZE bytes (limit $LIMIT)"
+          if [ "$SIZE" -gt "$LIMIT" ]; then
+            echo "::error::bundle grew to $SIZE bytes, over the $LIMIT limit: check the tsup externals"
+            exit 1
+          fi
+
+      - name: Guard the version source
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          grep -q "\"$PKG\"" dist/index.js || {
+            echo "::error::version $PKG from package.json is not present in the bundle"
+            exit 1
+          }
+          echo "version in bundle: $PKG"
