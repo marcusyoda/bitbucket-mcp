@@ -16,6 +16,11 @@ if (!process.env.BITBUCKET_API_TOKEN) {
   }
 }
 
+// Injected by tsup from package.json. Under tsx (pnpm dev) the define does not run, so
+// the typeof guard keeps the dev server booting instead of throwing on a missing global.
+declare const __PKG_VERSION__: string;
+const VERSION = typeof __PKG_VERSION__ === 'string' ? __PKG_VERSION__ : '0.0.0-dev';
+
 import { BitbucketClient } from './client.js';
 import { loadConfig } from './config.js';
 import type { Ctx } from './lib.js';
@@ -33,7 +38,7 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const ctx: Ctx = { client: new BitbucketClient(config), config };
 
-  const server = new McpServer({ name: 'bitbucket-mcp', version: '0.2.0' });
+  const server = new McpServer({ name: 'bitbucket-mcp', version: VERSION });
 
   registerRepoTools(server, ctx);
   registerPullRequestTools(server, ctx);
