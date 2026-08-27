@@ -253,6 +253,16 @@ issue first workflow: every commit links an issue in its header, as `type(scope)
 
 ---
 
-## License
+## Use it
 
-MIT. See [LICENSE](./LICENSE).
+MIT licensed, and that is meant literally: use it at work, use it commercially, fork it,
+vendor it into your own tooling, rename it. No permission to ask for and no attribution
+ritual beyond keeping the license notice. If it saves you an afternoon of writing REST
+calls by hand, it already paid for itself.
+
+Missing a tool, or hit a Bitbucket endpoint this does not cover?
+[Open an issue](https://github.com/marcusyoda/bitbucket-mcp/issues). Pull requests are
+welcome: the only house rule is that every commit links an issue in its header, as
+`type(scope): subject [#N]`.
+
+See [LICENSE](./LICENSE).

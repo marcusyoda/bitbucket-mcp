@@ -3,8 +3,27 @@
   "version": "0.2.0",
   "description": "MCP server for Bitbucket Cloud: repos, PRs, comments, branches, pipelines, webhooks and variables",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "Marcus Gonçalves <marcusyoda13@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcusyoda/bitbucket-mcp.git"
+  },
+  "homepage": "https://github.com/marcusyoda/bitbucket-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/marcusyoda/bitbucket-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "bitbucket",
+    "bitbucket-cloud",
+    "pull-request",
+    "code-review",
+    "pipelines",
+    "claude",
+    "ai-agent"
+  ],
   "publishConfig": {
     "access": "public"
   },
