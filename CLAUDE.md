@@ -33,7 +33,7 @@ Auth: Atlassian API token scoped, Basic `email:token`. Workspace e repo vêm das
 
 ## Convenções
 
-- **Sem travessão/em dash (`—`)** em nenhum texto: código, commits, comentários de PR, docs.
+- **Sem travessão nem meia-risca** em nenhum texto: código, commits, comentários de PR, docs.
   Usar vírgula, dois pontos, parênteses ou quebra de linha.
 - **Comentário de PR: texto em português + Conventional Comments.** Label em inglês, corpo em
   PT. Ex: `**suggestion (non-blocking):** extrair isto pra um helper`. Labels: praise, nitpick,
