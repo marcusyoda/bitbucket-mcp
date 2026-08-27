@@ -1,7 +1,7 @@
 {
   "name": "@marcusyoda/bitbucket-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for Bitbucket Cloud: PRs, comments, branches, pipelines, webhooks and variables",
+  "version": "0.2.0",
+  "description": "MCP server for Bitbucket Cloud: repos, PRs, comments, branches, pipelines, webhooks and variables",
   "type": "module",
   "license": "UNLICENSED",
   "author": "Marcus Gonçalves <marcusyoda13@gmail.com>",

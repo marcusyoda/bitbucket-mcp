@@ -3,14 +3,17 @@ import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-// Load .env from the package root if present. Lets the token live only in a
-// gitignored .env instead of the Claude Code config. Explicit process env that
-// is already set is left untouched.
-try {
-  const envPath = fileURLToPath(new URL('../.env', import.meta.url));
-  process.loadEnvFile(envPath);
-} catch {
-  // No .env file: rely on the environment passed by the launcher.
+// Load .env from the package root ONLY when the token was not already provided by
+// the environment. In a multi-project jail the launcher injects the per-project
+// BITBUCKET_* vars; skipping the .env load here guarantees a stray package .env
+// (another workspace, e.g. a company account) can never override that injected token.
+if (!process.env.BITBUCKET_API_TOKEN) {
+  try {
+    const envPath = fileURLToPath(new URL('../.env', import.meta.url));
+    process.loadEnvFile(envPath);
+  } catch {
+    // No .env file: rely on the environment passed by the launcher.
+  }
 }
 
 import { BitbucketClient } from './client.js';
@@ -30,7 +33,7 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const ctx: Ctx = { client: new BitbucketClient(config), config };
 
-  const server = new McpServer({ name: 'bitbucket-mcp', version: '0.1.0' });
+  const server = new McpServer({ name: 'bitbucket-mcp', version: '0.2.0' });
 
   registerRepoTools(server, ctx);
   registerPullRequestTools(server, ctx);

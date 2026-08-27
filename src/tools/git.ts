@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { resolveTarget } from '../config.js';
 import { assertConfirmed, assertNotProtected, assertWritable } from '../guard.js';
 import { execute, textResult, type Ctx } from '../lib.js';
-import { targetShape } from '../schemas.js';
+import { confirmShape, targetShape } from '../schemas.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -31,8 +31,47 @@ async function runGit(args: string[], cwd?: string): Promise<string> {
   }
 }
 
+/**
+ * Run git over HTTPS injecting the Bitbucket auth header via env config (not argv,
+ * not the remote URL) so the token never lands in .git/config or process args.
+ * Lets clone/push work inside a jail with no SSH key. GIT_TERMINAL_PROMPT=0 fails
+ * fast instead of hanging on a credential prompt.
+ */
+async function runGitAuth(authHeader: string, args: string[], cwd?: string): Promise<string> {
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'http.extraHeader',
+    GIT_CONFIG_VALUE_0: `Authorization: ${authHeader}`,
+    GIT_TERMINAL_PROMPT: '0',
+  };
+  try {
+    const { stdout, stderr } = await execFileAsync('git', args, {
+      cwd,
+      env,
+      timeout: 300_000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    return (stdout + stderr).trim();
+  } catch (err) {
+    const e = err as ExecError;
+    throw new Error([e.message, e.stdout, e.stderr].filter(Boolean).join('\n').trim());
+  }
+}
+
 async function currentBranch(dir: string): Promise<string> {
   return (await runGit(['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'])).trim();
+}
+
+/** Git over HTTPS needs username:token; fail clearly when BITBUCKET_USERNAME is unset. */
+function requireGitAuth(config: { gitAuthHeader: string | undefined }): string {
+  if (!config.gitAuthHeader) {
+    throw new Error(
+      'HTTPS git needs the Bitbucket account username: set BITBUCKET_USERNAME in the env ' +
+        '(git over HTTPS uses username:token, not email:token).',
+    );
+  }
+  return config.gitAuthHeader;
 }
 
 export function registerGitTools(server: McpServer, ctx: Ctx): void {
@@ -145,6 +184,63 @@ export function registerGitTools(server: McpServer, ctx: Ctx): void {
         if (args.force) cmdArgs.push('--force-with-lease');
         const out = await runGit(cmdArgs);
         return textResult(`Pushed ${branch} to origin${args.force ? ' (forced)' : ''}\n${out}`);
+      })
+  );
+
+  server.registerTool(
+    'clone_repo_https',
+    {
+      title: 'Clone repository (HTTPS token)',
+      description:
+        'Clone a repository over HTTPS using the API token (no SSH key needed). Ideal inside a ' +
+        'sandbox/jail. Reads from Bitbucket; ignores READ_ONLY (no remote mutation).',
+      inputSchema: {
+        ...targetShape,
+        dest: z.string().describe('Local destination directory.'),
+        branch: z.string().optional().describe('Single branch to clone.'),
+        depth: z.number().int().positive().optional().describe('Shallow clone depth.'),
+      },
+    },
+    (args) =>
+      execute(async () => {
+        const { workspace, repo } = resolveTarget(ctx.config, args);
+        const url = `https://bitbucket.org/${workspace}/${repo}.git`;
+        const cmdArgs = ['clone'];
+        if (args.branch) cmdArgs.push('--branch', args.branch, '--single-branch');
+        if (args.depth) cmdArgs.push('--depth', String(args.depth));
+        cmdArgs.push(url, args.dest);
+        const out = await runGitAuth(requireGitAuth(ctx.config), cmdArgs);
+        return textResult(`Cloned ${url} -> ${args.dest}\n${out || 'done.'}`);
+      })
+  );
+
+  server.registerTool(
+    'git_push_https',
+    {
+      title: 'Push local branch (HTTPS token)',
+      description:
+        'Push a branch to origin over HTTPS using the API token (no SSH key). Always needs ' +
+        'confirm:true. Hard-blocked for protected branches (main/dev): land via pull request. ' +
+        'The clone must use an https origin (use clone_repo_https).',
+      inputSchema: {
+        repo_dir: z.string().describe('Path to the local clone.'),
+        branch: z.string().optional().describe('Branch to push. Defaults to current.'),
+        force: z.boolean().optional().describe('Force push (--force-with-lease).'),
+        ...confirmShape,
+      },
+    },
+    (args) =>
+      execute(async () => {
+        assertWritable(ctx.config, 'git_push_https');
+        assertConfirmed(args.confirm, 'git_push_https');
+        const branch = args.branch?.trim() || (await currentBranch(args.repo_dir));
+        assertNotProtected(ctx.config, branch, 'git_push_https');
+        const cmdArgs = ['-C', args.repo_dir, 'push', '--set-upstream', 'origin', branch];
+        if (args.force) cmdArgs.push('--force-with-lease');
+        const out = await runGitAuth(requireGitAuth(ctx.config), cmdArgs);
+        return textResult(
+          `Pushed ${branch} to origin over HTTPS${args.force ? ' (forced)' : ''}\n${out}`,
+        );
       })
   );
 }
