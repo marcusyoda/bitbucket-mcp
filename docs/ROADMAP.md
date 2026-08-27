@@ -22,3 +22,5 @@
 - :package: **Padronização e publicação** · 2026-08-27
   - Padronizar o repositório: issues, board e commits assinados (#6) · 2026-08-27
   - README publicável: visual, instalação pelo npm e guia de registro (#4) · 2026-08-27
+  - Licenciar como MIT e unificar a fonte da versão (#9) · 2026-08-27
+  - CI, Dependabot e publicação automática no npm (#10) · 2026-08-27
