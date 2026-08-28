@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: read
+  # Required for npm trusted publishing: the job proves its identity to the registry
+  # through this OIDC token, so no long lived npm credential is stored in the repository.
   id-token: write
 
 jobs:
@@ -15,13 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v7
         with:
           node-version: '20'
           cache: pnpm
           registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or newer. Node 20 ships an older npm.
+      - name: Use an npm that supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
 
       # The release tag is the contract. Publishing a tag that disagrees with the manifest
       # puts a version on npm that no commit in this repository claims.
@@ -41,7 +49,7 @@ jobs:
 
       - run: pnpm build
 
+      # No NODE_AUTH_TOKEN on purpose: the registry authenticates this job by OIDC, and
+      # provenance is attached automatically by trusted publishing.
       - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
