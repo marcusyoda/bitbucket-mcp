@@ -4,16 +4,16 @@
 > promova para issue no padrão do repositório (ver CLAUDE.md) e **remova daqui no
 > mesmo commit** que referencia a issue nova.
 
-## Qualidade
+## Superfície MCP
 
-- Não existe suíte de testes. Começar pelas guardas (`src/guard.ts`): branch protegida,
-  read-only e trava de workspace são exatamente o que não pode regredir em silêncio.
+- Expor PR e diff como *resources*, não só como tools. Hoje todo review recarrega o
+  conteúdo a cada pergunta; um resource deixa o cliente referenciar o que já leu, que é
+  economia real de contexto no fluxo descrito no CLAUDE.md.
+- Avaliar *prompts* MCP para os fluxos fixos do CLAUDE.md, como revisar PR e corrigir
+  apontamentos, em vez de o humano reconstruir a sequência toda vez.
 
 ## Tools
 
-- `react_pr_comment` é experimental: reação emoji em comentário parece existir só no
-  Data Center. Verificar contra o Cloud e remover a tool se não for suportada.
-- `resolve_comment` depende de resolução de thread estar habilitada no repositório.
 - Sem endpoint para descobrir quais variáveis um pipeline custom espera. Hoje isso sai
   do `bitbucket-pipelines.yml` lido via `get_file_source`. Avaliar um helper que já
   devolva o bloco `variables:` parseado.
